@@ -35,8 +35,24 @@
         (.setIntColor image' (pos factor width' w) h (.getIntColor image2 w h)))
       image')))
 
-(defn p [image] (beside image image 0.3))
+(defn above [image1 image2 factor]
+  (let [width'  (.getWidth image1)
+        height' (.getHeight image1)
+        image'  (MarvinImage. width' height')]
+    (do
+      (doseq [w (range width')
+              h (range height')]
+        (.setIntColor image' w (* factor h) (.getIntColor image1 w h)))
+      (doseq [w (range width')
+              h (range height')]
+        (.setIntColor image' w (pos factor height' h) (.getIntColor image2 w h)))
+      image')))
+
+(def george (load-image "./george.png"))
+(def empty-image (MarvinImage. (.getWidth george) (.getHeight george)))
+
+(defn p [image]
+  (beside image (above empty-image image 0.5) 0.5))
 
 (defn -main [& args]
-  (let [image (load-image "./test.png")]
-    (save-image (p image) "test-output.png")))
+  (save-image (p george) "test-output.png"))
