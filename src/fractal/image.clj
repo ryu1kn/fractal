@@ -4,8 +4,20 @@
            [marvin.io MarvinImageIO])
   (:gen-class))
 
-(defn load-image [image-path] (MarvinImageIO/loadImage image-path))
+(defn confirm [predicate message value]
+  (do (when-not (predicate value) (throw (Exception. message))))
+      value)
+
+(defn square? [image] (= (.getHeight image) (.getWidth image)))
+(def get-size #(.getWidth %))
+
+(defn load-image [image-path]
+  (->> image-path (MarvinImageIO/loadImage) (confirm square? "Image must be a square")))
+(defn empty-image [size] (MarvinImage. size size))
 (defn save-image [image image-path] (MarvinImageIO/saveImage image image-path))
+
+(defn copy-point [image [w h] image' [w' h']]
+  (.setIntColor image' w' h' (.getIntColor image w h)))
 
 (defn pos [scale orig-size orig-pos]
   (+ (* scale orig-size)
@@ -13,37 +25,30 @@
      -1))
 
 (defn rotate [image]
-  (let [width'  (.getHeight image)
-        height' (.getWidth image)
-        image'  (MarvinImage. width' height')]
+  (let [size    (get-size image)
+        image'  (empty-image size)]
     (do
-      (doseq [w (range width')
-              h (range height')]
-        (.setIntColor image' w h (.getIntColor image (- height' h 1) w)))
+      (doseq [w (range size)
+              h (range size)]
+        (copy-point image [(- size h 1) w] image' [w h]))
       image')))
 
 (defn beside [image1 image2 factor]
-  (let [width'  (.getWidth image1)
-        height' (.getHeight image1)
-        image'  (MarvinImage. width' height')]
+  (let [size    (get-size image1)
+        image'  (empty-image size)]
     (do
-      (doseq [w (range width')
-              h (range height')]
-        (.setIntColor image' (* factor w) h (.getIntColor image1 w h)))
-      (doseq [w (range width')
-              h (range height')]
-        (.setIntColor image' (pos factor width' w) h (.getIntColor image2 w h)))
+      (doseq [w (range size)
+              h (range size)]
+        (copy-point image1 [w h] image' [(* factor w) h])
+        (copy-point image2 [w h] image' [(pos factor size w) h]))
       image')))
 
 (defn above [image1 image2 factor]
-  (let [width'  (.getWidth image1)
-        height' (.getHeight image1)
-        image'  (MarvinImage. width' height')]
+  (let [size    (get-size image1)
+        image'  (empty-image size)]
     (do
-      (doseq [w (range width')
-              h (range height')]
-        (.setIntColor image' w (* factor h) (.getIntColor image1 w h)))
-      (doseq [w (range width')
-              h (range height')]
-        (.setIntColor image' w (pos factor height' h) (.getIntColor image2 w h)))
+      (doseq [w (range size)
+              h (range size)]
+        (copy-point image1 [w h] image' [w (* factor h)])
+        (copy-point image2 [w h] image' [w (pos factor size h)]))
       image')))
