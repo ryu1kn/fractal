@@ -33,6 +33,15 @@
         (copy-point image [(- size h 1) w] image' [w h]))
       image')))
 
+(defn flip [image]
+  (let [size    (get-size image)
+        image'  (empty-image size)]
+    (do
+      (doseq [w (range size)
+              h (range size)]
+        (copy-point image [w (- size h 1)] image' [w h]))
+      image')))
+
 (defn beside [image1 image2 factor]
   (let [size    (get-size image1)
         image'  (empty-image size)]
